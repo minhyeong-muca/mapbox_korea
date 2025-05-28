@@ -341,34 +341,51 @@
       }
 
       try {
-        const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center.lng},${center.lat}.json?access_token=${mapboxgl.accessToken}&language=ko`);
+        const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center.lng},${center.lat}.json?access_token=${mapboxgl.accessToken}&language=ko&limit=1`);
         const data = await response.json();
         
         if (data.features && data.features.length > 0) {
-          // context에서 place, district, region, country 정보 찾기
-          const context = data.features[0].context || [];
-          const place = context.find(item => item.id.startsWith('place'))?.text;
-          const district = context.find(item => item.id.startsWith('district'))?.text;
-          const region = context.find(item => item.id.startsWith('region'))?.text;
-          const country = context.find(item => item.id.startsWith('country'))?.text;
+          const mainFeature = data.features[0];
+          const context = mainFeature.context || [];
           
+          // 주소 컴포넌트 추출
+          const address = {
+            country: context.find(item => item.id.startsWith('country'))?.text,
+            region: context.find(item => item.id.startsWith('region'))?.text,
+            district: context.find(item => item.id.startsWith('district'))?.text,
+            locality: context.find(item => item.id.startsWith('locality'))?.text,
+            neighborhood: context.find(item => item.id.startsWith('neighborhood'))?.text,
+            place: mainFeature.text
+          };
+
           // 줌 레벨에 따른 주소 표시
-          let addressParts = [];
+          let addressComponents = [];
           
           if (currentZoom <= 7) {
-            // 줌 레벨 7 이하: 국가만 표시
-            addressParts = country ? [country] : [];
+            // 국가만
+            addressComponents = ['country'];
           } else if (currentZoom > 7 && currentZoom < 10) {
-            // 줌 레벨 7 초과 10 미만: 국가, 시/도까지 표시
-            addressParts = [country, region].filter(Boolean);
+            // 국가, 시/도
+            addressComponents = ['country', 'region'];
+          } else if (currentZoom >= 10 && currentZoom < 13) {
+            // 시/도, 시/군/구
+            addressComponents = ['region', 'district'];
           } else {
-            // 줌 레벨 10 이상: 모든 정보 표시
-            addressParts = [country, region, district, place].filter(Boolean);
+            // 모든 정보 (국가 제외)
+            addressComponents = ['region', 'district', 'locality', 'neighborhood', 'place'];
           }
+
+          // 주소 컴포넌트 조합
+          const addressParts = addressComponents
+            .map(component => address[component])
+            .filter(Boolean);
+
+          // 중복 제거 및 주소 조합
+          const uniqueAddressParts = [...new Set(addressParts)];
+          const finalAddress = uniqueAddressParts.join(' ');
           
-          if (addressParts.length > 0) {
-            const address = addressParts.join(' ');
-            locationDisplay.textContent = address;
+          if (finalAddress) {
+            locationDisplay.textContent = finalAddress;
             locationDisplay.style.display = 'block';
             locationDisplay.style.marginBottom = '4px';
           } else {
@@ -400,7 +417,7 @@
     }
 
     // 위치 업데이트 디바운스 적용
-    const debouncedUpdateLocation = debounce(updateLocationDisplay, 500);
+    const debouncedUpdateLocation = debounce(updateLocationDisplay, 200);
 
     // Mapbox 스타일, 센터 좌표, 줌 정도
     const map = new mapboxgl.Map({
@@ -412,10 +429,11 @@
       minZoom: 0,
       pitch: 0,
       antialias: true,
+      fadeDuration: 0,
       scrollZoom: {
         smooth: true,
-        speed: 0.3,
-        smoothTime: 100
+        speed: 0.5,
+        smoothTime: 50
       }
     });
 
@@ -428,7 +446,7 @@
       let lastTouchDistance = null;
       let currentZoom = null;
       let zoomVelocity = 0;
-      const ZOOM_SPEED = 0.015; // 줌 속도 조절
+      const ZOOM_SPEED = 0.02; // 줌 속도 조절
 
       map.on('touchstart', (e) => {
         if (e.points.length === 2) {
@@ -532,6 +550,10 @@
 
       // 주기적으로 zoomDisplay 업데이트 (백업 메커니즘)
       setInterval(updateZoomDisplay, 1000);
+
+      // 성능 최적화 설정
+      map.getCanvas().style.imageRendering = 'high-quality';
+      map.setPaintProperty('satellite', 'raster-resampling', 'nearest');
     });
 
     // 지도 클릭 이벤트 처리
@@ -685,6 +707,34 @@
 
           markerPopupPairs.push({ marker, popup, label, avatar, img, location: user.location });
           markerLabelPairs.push({ label, location: user.location });
+
+          // 마커 클릭 이벤트 처리
+          marker.getElement().addEventListener('click', (e) => {
+            e.preventDefault(); // 지도 클릭 이벤트 전파 방지
+            const zoom = map.getZoom();
+            if (zoom >= 11) {
+              // 다른 팝업들과 라벨들 모두 제거
+              markerPopupPairs.forEach(pair => {
+                pair.popup.remove();
+                pair.label.style.display = 'none';
+              });
+              // 클릭한 마커의 팝업과 라벨만 표시
+              popup.setLngLat(user.location).addTo(map);
+              label.style.display = 'block';
+              updateLabelPosition(label, user.location);
+            }
+          });
+
+          // 지도 클릭 이벤트 처리 (마커 외 영역 클릭 시)
+          map.on('click', (e) => {
+            // 마커나 팝업을 클릭한 경우가 아니라면 모든 팝업과 라벨 숨기기
+            if (!e.originalEvent.defaultPrevented) {
+              markerPopupPairs.forEach(({ popup, label }) => {
+                popup.remove();
+                label.style.display = 'none';
+              });
+            }
+          });
         });
 
         // 줌 레벨에 따른 마커 표시 업데이트
@@ -728,7 +778,7 @@
                 // 마커 추가
                 marker.addTo(map);
                 // 닉네임 표시
-                label.style.display = 'block'; 
+                label.style.display = 'block';
                 // 팝업 표시
                 if (!popup.isOpen()) {
                   popup.setLngLat(location).addTo(map);
@@ -743,18 +793,15 @@
                 // 마커 추가
                 marker.addTo(map);
                 // 닉네임 표시
-                label.style.display = 'block';
+                label.style.display = 'none';
                 // 팝업 숨김
                 popup.remove();
               }
 
-              // 마커 크기에 따른 라벨 위치 조정
-              const markerSize = parseInt(avatar.style.width);
-              const labelOffset = markerSize / 2 + 8;
-
-              const pos = map.project(location);
-              label.style.left = `${pos.x}px`;
-              label.style.top = `${pos.y + labelOffset}px`;
+              // 라벨이 표시 중이면 위치 업데이트
+              if (label.style.display === 'block') {
+                updateLabelPosition(label, location);
+              }
             });
           }
         });
@@ -889,6 +936,23 @@
       if (watchId) {
         navigator.geolocation.clearWatch(watchId);
       }
+    });
+
+    // 라벨 위치 업데이트 함수
+    function updateLabelPosition(label, location) {
+      const pos = map.project(location);
+      const markerHeight = 40; // 마커의 높이
+      label.style.left = `${pos.x}px`;
+      label.style.top = `${pos.y + markerHeight + 8}px`; // 마커 아래에 위치
+    }
+
+    // 지도 이동/줌 시 라벨 위치 업데이트
+    map.on('move', () => {
+      markerPopupPairs.forEach(({ label, location }) => {
+        if (label.style.display === 'block') {
+          updateLabelPosition(label, location);
+        }
+      });
     });
   </script>
 </body>
