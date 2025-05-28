@@ -9,6 +9,9 @@
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
   
+  <!-- Hammer.js for better touch gestures -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+  
   <!-- 스타일 설정 -->
   <style>
     html, body {
@@ -368,11 +371,32 @@
       pitch: 0,
       antialias: true,
       fadeDuration: 0,
+      touchZoomRotate: true,
+      touchPitch: true,
+      cooperativeGestures: false,
       scrollZoom: {
         smooth: true,
-        speed: 0.5,
-        smoothTime: 50
+        speed: 1,
+        smoothTime: 0
+      },
+      touchZoomRotate: {
+        around: 'center',
+        pinchZoom: true
       }
+    });
+
+    // 터치 제스처 설정
+    map.touchZoomRotate.enable();
+    map.touchZoomRotate.enableRotation();
+    
+    // 모바일 터치 동작 최적화
+    const hammer = new Hammer(map.getCanvas());
+    hammer.get('pinch').set({ enable: true });
+    
+    hammer.on('pinch', (e) => {
+      const scale = e.scale;
+      const delta = scale > 1 ? 1 : -1;
+      map.zoomTo(map.getZoom() + (delta * 0.3));
     });
 
     // 클러스터 상태 관리
