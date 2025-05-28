@@ -411,8 +411,30 @@
       maxZoom: 16,
       minZoom: 0,
       pitch: 0,
-      antialias: true
+      antialias: true,
+      scrollZoom: {
+        smooth: true,
+        speed: 0.3,
+        smoothTime: 100
+      }
     });
+
+    // 줌 제스처 설정
+    map.touchZoomRotate.enable();
+    map.touchZoomRotate.enableRotation();
+    
+    // 줌 이벤트 처리
+    let zoomTimeout;
+    map.on('zoom', () => {
+      clearTimeout(zoomTimeout);
+      zoomTimeout = setTimeout(updateZoomDisplay, 100);
+    });
+
+    // 모바일 터치 이벤트 최적화
+    if ('ontouchstart' in window) {
+      map.dragRotate.disable(); // 모바일에서 회전 비활성화
+      map.touchZoomRotate.disableRotation(); // 모바일에서 회전 비활성화
+    }
 
     // 초기 줌 레벨 강제 설정
     map.once('load', () => {
