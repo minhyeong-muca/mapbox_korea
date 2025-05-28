@@ -428,7 +428,7 @@
       let lastTouchDistance = null;
       let currentZoom = null;
       let zoomVelocity = 0;
-      const ZOOM_SPEED = 0.008; // 줌 속도 조절
+      const ZOOM_SPEED = 0.01; // 줌 속도 조절
 
       map.on('touchstart', (e) => {
         if (e.points.length === 2) {
