@@ -416,10 +416,6 @@
         smooth: true,
         speed: 0.3,
         smoothTime: 100
-      },
-      touchZoomRotate: {
-        around: 'center',
-        pinchZoom: true
       }
     });
 
@@ -427,7 +423,39 @@
     if ('ontouchstart' in window) {
       map.dragRotate.disable(); // 모바일에서 회전 비활성화
       map.touchZoomRotate.disableRotation(); // 모바일에서 회전 비활성화
-      map.touchZoomRotate.enable(); // 터치 줌 활성화
+      
+      // 터치 줌 이벤트 커스터마이징
+      let startZoom = null;
+      let lastTouchDistance = null;
+
+      map.on('touchstart', (e) => {
+        if (e.points.length === 2) {
+          startZoom = map.getZoom();
+          lastTouchDistance = Math.hypot(
+            e.points[0].x - e.points[1].x,
+            e.points[0].y - e.points[1].y
+          );
+        }
+      });
+
+      map.on('touchmove', (e) => {
+        if (e.points.length === 2 && startZoom !== null) {
+          const newTouchDistance = Math.hypot(
+            e.points[0].x - e.points[1].x,
+            e.points[0].y - e.points[1].y
+          );
+          
+          const zoomDiff = (newTouchDistance - lastTouchDistance) * 0.015; // 줌 민감도 증가
+          
+          map.setZoom(startZoom + zoomDiff);
+          lastTouchDistance = newTouchDistance;
+        }
+      });
+
+      map.on('touchend', () => {
+        startZoom = null;
+        lastTouchDistance = null;
+      });
     }
 
     // 줌 이벤트 처리
