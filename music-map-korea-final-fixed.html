@@ -425,36 +425,51 @@
       map.touchZoomRotate.disableRotation(); // 모바일에서 회전 비활성화
       
       // 터치 줌 이벤트 커스터마이징
-      let startZoom = null;
       let lastTouchDistance = null;
+      let currentZoom = null;
+      let zoomVelocity = 0;
+      const ZOOM_SPEED = 0.008; // 줌 속도 조절
 
       map.on('touchstart', (e) => {
         if (e.points.length === 2) {
-          startZoom = map.getZoom();
           lastTouchDistance = Math.hypot(
             e.points[0].x - e.points[1].x,
             e.points[0].y - e.points[1].y
           );
+          currentZoom = map.getZoom();
+          zoomVelocity = 0;
         }
       });
 
       map.on('touchmove', (e) => {
-        if (e.points.length === 2 && startZoom !== null) {
+        if (e.points.length === 2 && lastTouchDistance !== null) {
           const newTouchDistance = Math.hypot(
             e.points[0].x - e.points[1].x,
             e.points[0].y - e.points[1].y
           );
           
-          const zoomDiff = (newTouchDistance - lastTouchDistance) * 0.015; // 줌 민감도 증가
+          // 거리 변화율 계산
+          const scale = newTouchDistance / lastTouchDistance;
           
-          map.setZoom(startZoom + zoomDiff);
+          // 줌 속도 계산
+          zoomVelocity = (scale - 1) * ZOOM_SPEED * 60;
+          
+          // 현재 줌 레벨 업데이트
+          currentZoom += zoomVelocity;
+          currentZoom = Math.max(map.getMinZoom(), Math.min(map.getMaxZoom(), currentZoom));
+          
+          // 지도 줌 레벨 설정
+          map.setZoom(currentZoom);
+          
+          // 현재 거리 저장
           lastTouchDistance = newTouchDistance;
         }
       });
 
       map.on('touchend', () => {
-        startZoom = null;
         lastTouchDistance = null;
+        currentZoom = null;
+        zoomVelocity = 0;
       });
     }
 
