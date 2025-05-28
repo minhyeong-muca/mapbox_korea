@@ -8,6 +8,9 @@
   <!-- Mapbox 스타일 및 스크립트 -->
   <script src="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.js"></script>
   <link href="https://api.mapbox.com/mapbox-gl-js/v2.15.0/mapbox-gl.css" rel="stylesheet" />
+  
+  <!-- Hammer.js for better touch handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
 
   <!-- 스타일 설정 -->
   <style>
@@ -419,10 +422,29 @@
       }
     });
 
-    // 줌 제스처 설정
-    map.touchZoomRotate.enable();
-    map.touchZoomRotate.enableRotation();
-    
+    // 모바일 터치 설정
+    if ('ontouchstart' in window) {
+      // 터치 이벤트에 대한 줌 동작 최적화
+      const hammer = new Hammer(map.getCanvas());
+      hammer.get('pinch').set({ enable: true });
+      
+      let lastScale = 1;
+      hammer.on('pinch', (e) => {
+        const diff = e.scale - lastScale;
+        const zoom = map.getZoom();
+        map.easeTo({
+          zoom: zoom + diff * 0.5,
+          duration: 50,
+          easing: t => t
+        });
+        lastScale = e.scale;
+      });
+
+      hammer.on('pinchend', () => {
+        lastScale = 1;
+      });
+    }
+
     // 줌 이벤트 처리
     let zoomTimeout;
     map.on('zoom', () => {
