@@ -8,7 +8,9 @@
     "location": [
       126.922148,
       37.55878
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 95
   },
   {
     "id": 2,
@@ -19,7 +21,9 @@
     "location": [
       127.059468,
       37.514927
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 88
   },
   {
     "id": 3,
@@ -30,7 +34,9 @@
     "location": [
       126.922009,
       37.554198
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 92
   },
   {
     "id": 4,
@@ -41,7 +47,9 @@
     "location": [
       126.888904,
       37.577738
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 75
   },
   {
     "id": 5,
@@ -52,7 +60,9 @@
     "location": [
       126.921606,
       37.554883
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 85
   },
   {
     "id": 6,
@@ -63,7 +73,9 @@
     "location": [
       126.994361,
       37.537969
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 78
   },
   {
     "id": 7,
@@ -74,7 +86,9 @@
     "location": [
       126.919984,
       37.556553
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 90
   },
   {
     "id": 8,
@@ -85,7 +99,9 @@
     "location": [
       126.886867,
       37.576404
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 82
   },
   {
     "id": 9,
@@ -96,7 +112,9 @@
     "location": [
       126.890766,
       37.578151
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 87
   },
   {
     "id": 10,
@@ -107,7 +125,9 @@
     "location": [
       127.068861,
       37.543055
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 70
   },
   {
     "id": 11,
@@ -118,7 +138,9 @@
     "location": [
       126.992001,
       37.535384
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 93
   },
   {
     "id": 12,
@@ -129,7 +151,9 @@
     "location": [
       126.983756,
       37.562681
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 79
   },
   {
     "id": 13,
@@ -140,7 +164,9 @@
     "location": [
       127.030893,
       37.49819
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 86
   },
   {
     "id": 14,
@@ -151,7 +177,9 @@
     "location": [
       126.994362,
       37.530956
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 84
   },
   {
     "id": 15,
@@ -162,7 +190,9 @@
     "location": [
       126.924197,
       37.558288
-    ]
+    ],
+    "isFriend": true,
+    "intimacy": 91
   },
   {
     "id": 16,
