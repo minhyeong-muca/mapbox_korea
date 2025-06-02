@@ -753,7 +753,6 @@
               label.style.display = 'none';
             });
 
-            // 성능 최적화를 위한 디바운스
             if (zoom >= 13) {
               requestAnimationFrame(() => {
                 markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
@@ -769,7 +768,7 @@
                   // 화면 영역 체크
                   const pos = map.project(location);
                   const canvas = map.getCanvas();
-                  const buffer = 100; // 화면 밖 버퍼 영역
+                  const buffer = 100;
 
                   if (pos.x >= -buffer && pos.x <= canvas.width + buffer &&
                       pos.y >= -buffer && pos.y <= canvas.height + buffer) {
@@ -777,8 +776,8 @@
                     avatar.style.display = 'block';
                     marker.addTo(map);
 
-                    // 라벨 표시 (줌 13 이상)
-                    if (zoom >= 13) {
+                    // 라벨 표시 (줌 15.5 이상)
+                    if (zoom >= 15.5) {
                       label.style.display = 'block';
                       updateLabelPosition(label, location);
                     }
@@ -791,19 +790,6 @@
                     }
                   }
                 });
-              });
-            } else {
-              // 클러스터 표시 (줌 13 미만)
-              const locations = markerPopupPairs.map(({ location }) => ({
-                lat: location[1],
-                lng: location[0]
-              }));
-              
-              const clusterData = createCluster(locations, zoom);
-              clusterData.forEach((data, key) => {
-                const clusterMarker = createClusterMarker(data.center, data.count);
-                clusterMarker.addTo(map);
-                clusterMarkers.push(clusterMarker);
               });
             }
 
