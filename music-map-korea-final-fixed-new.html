@@ -520,7 +520,7 @@
       }
       
       try {
-        const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center.lng},${center.lat}.json?access_token=${mapboxgl.accessToken}&language=ko&limit=1&types=place,district,locality,neighborhood`);
+        const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center.lng},${center.lat}.json?access_token=${mapboxgl.accessToken}&language=ko&limit=1&types=locality,neighborhood,place,district`);
         const data = await response.json();
         
         if (data.features && data.features.length > 0) {
@@ -544,11 +544,12 @@
               text.endsWith('구') || 
               text.endsWith('군')
             ),
-            locality: allTexts.find(text => 
-              (text.endsWith('동') || text.endsWith('읍') || text.endsWith('면')) &&
-              !text.includes('구') &&
-              !text.includes('시')
-            ) || mainFeature.text
+            neighborhood: allTexts.find(text => 
+              text.endsWith('동') || 
+              text.endsWith('읍') || 
+              text.endsWith('면')
+            ),
+            place: mainFeature.text
           };
 
           let addressComponents = [];
@@ -556,13 +557,13 @@
           if (currentZoom >= 5 && currentZoom <= 7) {
             addressComponents = ['country'];
           } else if (currentZoom > 7 && currentZoom <= 9) {
-            addressComponents = ['country', 'region'];
+            addressComponents = ['region'];
           } else if (currentZoom > 9 && currentZoom <= 11) {
-            addressComponents = ['country', 'region', 'district'];
-          } else if (currentZoom > 11 && currentZoom <= 13) {
             addressComponents = ['region', 'district'];
+          } else if (currentZoom > 11 && currentZoom <= 13) {
+            addressComponents = ['district', 'neighborhood'];
           } else {
-            addressComponents = ['district', 'locality'];
+            addressComponents = ['neighborhood', 'place'];
           }
 
           const addressParts = addressComponents
@@ -625,19 +626,12 @@
 
     // 지도 로드 완료 시 실행
     map.on('load', () => {
-      console.log('Map loaded');
-      
-      // 초기 상태 설정
-      updateZoomDisplay();
-      updateLocationDisplay();
-      updatePrivacyOverlay();
-      updatePitch();
-
+      console.log('지도 초기화 완료');
       // 데이터 로딩
       fetch('users_updated_with_scattered.json')
         .then(res => res.json())
         .then(users => {
-          console.log('Users data loaded:', users);
+          console.log(`총 ${users.length}개의 데이터 로드 완료`);
           
           // 기존 마커 제거
           markerPopupPairs.forEach(({ marker, label }) => {
@@ -650,7 +644,6 @@
           markerLabelPairs = [];
 
           users.forEach(user => {
-            console.log('Creating marker for user:', user.nickname);
             const avatar = document.createElement('div');
             avatar.style.width = '32px';
             avatar.style.height = '32px';
@@ -759,43 +752,55 @@
               label.style.display = 'none';
             });
 
-            if (zoom >= 13) {
-              requestAnimationFrame(() => {
-                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
-                  // 마커 크기 설정
-                  if (zoom >= 13 && zoom < 14) {
-                    avatar.style.width = '32px';
-                    avatar.style.height = '32px';
-                  } else {
-                    avatar.style.width = '40px';
-                    avatar.style.height = '40px';
+            if (zoom < 13) {
+              // 클러스터 모드
+              const locations = markerPopupPairs.map(({ location }) => ({
+                lng: location[0],
+                lat: location[1]
+              }));
+              
+              const clusters = createCluster(locations, zoom);
+              
+              clusters.forEach((cluster, key) => {
+                if (cluster.count > 1) {
+                  const marker = createClusterMarker(cluster.center, cluster.count);
+                  marker.addTo(map);
+                  clusterMarkers.push(marker);
+                }
+              });
+            } else {
+              // 개별 마커 모드
+              markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
+                // 마커 크기 설정
+                if (zoom >= 13 && zoom < 14) {
+                  avatar.style.width = '32px';
+                  avatar.style.height = '32px';
+                } else {
+                  avatar.style.width = '40px';
+                  avatar.style.height = '40px';
+                }
+
+                // 화면 영역 체크
+                const pos = map.project(location);
+                const canvas = map.getCanvas();
+                const buffer = 100;
+
+                if (pos.x >= -buffer && pos.x <= canvas.width + buffer &&
+                    pos.y >= -buffer && pos.y <= canvas.height + buffer) {
+                  // 마커 표시
+                  marker.addTo(map);
+
+                  // 라벨 표시 (줌 15.5 이상)
+                  if (zoom >= 15.5) {
+                    label.style.display = 'block';
+                    updateLabelPosition(label, location);
                   }
 
-                  // 화면 영역 체크
-                  const pos = map.project(location);
-                  const canvas = map.getCanvas();
-                  const buffer = 100;
-
-                  if (pos.x >= -buffer && pos.x <= canvas.width + buffer &&
-                      pos.y >= -buffer && pos.y <= canvas.height + buffer) {
-                    // 마커 표시
-                    avatar.style.display = 'block';
-                    marker.addTo(map);
-
-                    // 라벨 표시 (줌 15.5 이상)
-                    if (zoom >= 15.5) {
-                      label.style.display = 'block';
-                      updateLabelPosition(label, location);
-                    }
-
-                    // 팝업 표시 (줌 14 이상)
-                    if (zoom >= 14) {
-                      popup.remove();
-                      marker.setPopup(popup);
-                      popup.addTo(map);
-                    }
+                  // 팝업 표시 (줌 14 이상)
+                  if (zoom >= 14) {
+                    popup.addTo(map);
                   }
-                });
+                }
               });
             }
 
@@ -808,7 +813,7 @@
           }
 
           // 초기 상태 설정
-          console.log('Setting up initial state');
+          console.log('초기 상태 설정 중...');
           updateMarkersAndClusters();
           updateZoomDisplay();
           updateLocationDisplay();
@@ -829,7 +834,7 @@
           });
         })
         .catch(err => {
-          console.error('❌ Error loading user data:', err);
+          console.error('❌ 데이터 로드 중 오류 발생:', err);
         });
     });
 
