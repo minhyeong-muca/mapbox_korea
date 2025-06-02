@@ -634,23 +634,15 @@
       fetch('users_updated_with_scattered.json')
         .then(res => res.json())
         .then(users => {
-          // 친구가 아닌 사용자의 마커는 더 작고 투명하게 표시
           users.forEach(user => {
             const avatar = document.createElement('div');
-            avatar.style.width = '50px';
-            avatar.style.height = '50px';
+            avatar.style.width = '32px';
+            avatar.style.height = '32px';
             avatar.style.borderRadius = '50%';
             avatar.style.overflow = 'hidden';
             avatar.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
             avatar.style.cursor = 'pointer';
-            avatar.style.display = 'none';
-            
-            // 친구가 아닌 경우 마커 스타일 조정
-            if (!user.isFriend) {
-              avatar.style.opacity = '0.6';
-              avatar.style.width = '40px';
-              avatar.style.height = '40px';
-            }
+            avatar.style.display = 'block';
 
             const img = document.createElement('img');
             img.src = `images/${user.characterImg}`;
@@ -669,7 +661,6 @@
               <div class="popup-content">
                 <div class="song-info">${user.title}</div>
                 <div class="artist">${user.artist}</div>
-                ${user.isFriend ? `<div style="font-size: 11px; color: #3B82F6; margin-top: 2px;">친밀도 ${user.intimacy}%</div>` : ''}
               </div>
             `);
 
@@ -678,7 +669,8 @@
               anchor: 'center',
               clickTolerance: 0
             })
-            .setLngLat(user.location);
+            .setLngLat(user.location)
+            .addTo(map);
 
             const label = document.createElement('div');
             label.textContent = user.nickname;
@@ -701,9 +693,7 @@
               label,
               avatar,
               img,
-              location: user.location,
-              isFriend: user.isFriend,
-              intimacy: user.intimacy
+              location: user.location
             });
 
             markerLabelPairs.push({
@@ -736,14 +726,6 @@
                 updateLabelPosition(label, user.location);
               }
             });
-
-            // 마커 크기에 따른 팝업 위치 조정
-            function updatePopupOffset() {
-              const markerHeight = map.getZoom() >= 14 ? 40 : 32;
-              popup.options.offset[1] = -(markerHeight/2) - 8;
-            }
-
-            map.on('zoom', updatePopupOffset);
 
             marker.setPopup(popup);
           });
@@ -816,6 +798,7 @@
           updateLocationDisplay();
           updatePrivacyOverlay();
           updatePitch();
+          updateMarkersAndClusters();
 
           // 이벤트 리스너 등록
           map.on('zoom', () => {
