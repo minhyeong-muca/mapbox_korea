@@ -365,7 +365,7 @@
       container: 'map',
       style: getStyleUrl(),
       center: [127.0276, 37.4979],
-      zoom: 10,
+      zoom: 8,
       maxZoom: 20,
       minZoom: 0,
       pitch: 0,
@@ -630,11 +630,19 @@
 
     // 지도 로드 완료 시 실행
     map.on('load', () => {
+      console.log('Map loaded');
       // 데이터 로딩
       fetch('users_updated_with_scattered.json')
         .then(res => res.json())
         .then(users => {
+          console.log('Users data loaded:', users);
+          
+          // 마커와 팝업을 함께 저장할 배열 초기화
+          markerPopupPairs = [];
+          markerLabelPairs = [];
+
           users.forEach(user => {
+            console.log('Creating marker for user:', user.nickname);
             const avatar = document.createElement('div');
             avatar.style.width = '32px';
             avatar.style.height = '32px';
@@ -652,25 +660,26 @@
             img.style.objectFit = 'cover';
             avatar.appendChild(img);
 
+            const marker = new mapboxgl.Marker({
+              element: avatar,
+              anchor: 'center'
+            })
+            .setLngLat(user.location);
+
             const popup = new mapboxgl.Popup({
               offset: [0, 8],
               closeButton: false,
               closeOnClick: false,
               anchor: 'bottom'
-            }).setHTML(`
+            })
+            .setHTML(`
               <div class="popup-content">
                 <div class="song-info">${user.title}</div>
                 <div class="artist">${user.artist}</div>
               </div>
             `);
 
-            const marker = new mapboxgl.Marker({
-              element: avatar,
-              anchor: 'center',
-              clickTolerance: 0
-            })
-            .setLngLat(user.location)
-            .addTo(map);
+            marker.setPopup(popup);
 
             const label = document.createElement('div');
             label.textContent = user.nickname;
@@ -701,12 +710,14 @@
               location: user.location
             });
 
-            // 마커 클릭 이벤트 처리
+            // 마커를 지도에 추가
+            marker.addTo(map);
+
+            // 마커 클릭 이벤트
             marker.getElement().addEventListener('click', (e) => {
               e.preventDefault();
               e.stopPropagation();
               
-              // 다른 모든 팝업과 라벨 숨기기
               markerPopupPairs.forEach(pair => {
                 pair.popup.remove();
                 if (map.getZoom() < 15.5) {
@@ -714,10 +725,7 @@
                 }
               });
 
-              // 클릭한 마커의 팝업과 라벨 표시
               if (map.getZoom() >= 14) {
-                popup.remove();
-                marker.setPopup(popup);
                 popup.addTo(map);
               }
               
@@ -726,8 +734,6 @@
                 updateLabelPosition(label, user.location);
               }
             });
-
-            marker.setPopup(popup);
           });
 
           // 줌 레벨에 따른 마커 표시 업데이트
@@ -794,36 +800,28 @@
           }
 
           // 초기 상태 설정
+          console.log('Setting up initial state');
+          updateMarkersAndClusters();
           updateZoomDisplay();
           updateLocationDisplay();
           updatePrivacyOverlay();
           updatePitch();
-          updateMarkersAndClusters();
 
-          // 이벤트 리스너 등록
+          // 이벤트 리스너
           map.on('zoom', () => {
+            updateMarkersAndClusters();
             updateZoomDisplay();
             updatePrivacyOverlay();
             updatePitch();
           });
           
-          map.on('zoomend', () => {
+          map.on('moveend', () => {
             updateMarkersAndClusters();
-          });
-          
-          map.on('moveend', updateLocationDisplay);
-
-          // 지도 이동 시 라벨 위치 업데이트
-          map.on('move', () => {
-            markerLabelPairs.forEach(({ label, location }) => {
-              if (label.style.display === 'block') {
-                updateLabelPosition(label, location);
-              }
-            });
+            updateLocationDisplay();
           });
         })
         .catch(err => {
-          console.error('❌ 유저 데이터를 불러오지 못했습니다:', err);
+          console.error('❌ Error loading user data:', err);
         });
     });
 
