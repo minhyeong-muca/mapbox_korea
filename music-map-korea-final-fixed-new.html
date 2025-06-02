@@ -470,8 +470,9 @@
     // 라벨 위치 업데이트 함수
     function updateLabelPosition(label, location) {
       const pos = map.project(location);
+      const markerHeight = map.getZoom() >= 14 ? 40 : 32;
       label.style.left = `${pos.x}px`;
-      label.style.top = `${pos.y + 8}px`; // 마커 하단에서 8px 아래로
+      label.style.top = `${pos.y + (markerHeight/2) + 8}px`; // 마커 중앙에서 마커 반높이를 더하고 추가로 8px 아래로
     }
 
     // 클러스터 생성 함수
