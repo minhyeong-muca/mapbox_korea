@@ -652,7 +652,7 @@
             avatar.appendChild(img);
 
             const popup = new mapboxgl.Popup({
-              offset: [0, 8],
+              offset: [0, -28],
               closeButton: false,
               closeOnClick: false,
               anchor: 'top'
@@ -665,7 +665,7 @@
 
             const marker = new mapboxgl.Marker({
               element: avatar,
-              anchor: 'bottom',
+              anchor: 'center',
               clickTolerance: 0
             })
             .setLngLat(user.location);
@@ -724,6 +724,17 @@
                 updateLabelPosition(label, user.location);
               }
             });
+
+            // 마커 크기에 따른 팝업 위치 조정
+            function updatePopupOffset() {
+              const markerHeight = map.getZoom() >= 14 ? 40 : 32;
+              popup.options.offset[1] = -(markerHeight/2 + 8); // 마커 중앙에서 위로 (마커 반높이 + 8px)
+            }
+
+            // 줌 변경 시 팝업 위치 업데이트
+            map.on('zoom', updatePopupOffset);
+
+            marker.setPopup(popup);
           });
 
           // 줌 레벨에 따른 마커 표시 업데이트
