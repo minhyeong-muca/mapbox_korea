@@ -353,11 +353,11 @@
 
   <script>
     // Mapbox 토큰
-    mapboxgl.accessToken = 'pk.eyJ1IjoibWluaHllb25na2ltIiwiYSI6ImNtYWRsNzA5ZTBld3Iya29uNG80MnFhZnMifQ.JwmMpGd-0shCxK5Q0JqgAQ';
+    mapboxgl.accessToken = 'pk.eyJ1IjoibWluaHllb25na2ltIiwiYSI6ImNsbzJwYjY4cTF3Y2gya3A2OXZ6Ym9xY2kifQ.GbMLp4BfUjWuVnZV_QQo2g';
     
     // Mapbox 스타일 URL
     const getStyleUrl = () => {
-      return 'mapbox://styles/minhyeongkim/cmb0bsdjd00mq01rf97v47t59';
+      return 'mapbox://styles/minhyeongkim/clnzxk7t0006801qy2mrk6gpj';
     };
 
     // 지도 초기화
@@ -765,14 +765,14 @@
 
             if (zoom >= 13) {
               requestAnimationFrame(() => {
-                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location, isFriend }) => {
+                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
                   // 마커 크기 설정
                   if (zoom >= 13 && zoom < 14) {
-                    avatar.style.width = isFriend ? '32px' : '24px';
-                    avatar.style.height = isFriend ? '32px' : '24px';
+                    avatar.style.width = '32px';
+                    avatar.style.height = '32px';
                   } else {
-                    avatar.style.width = isFriend ? '40px' : '32px';
-                    avatar.style.height = isFriend ? '40px' : '32px';
+                    avatar.style.width = '40px';
+                    avatar.style.height = '40px';
                   }
 
                   // 화면 영역 체크
