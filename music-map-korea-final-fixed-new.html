@@ -470,9 +470,8 @@
     // 라벨 위치 업데이트 함수
     function updateLabelPosition(label, location) {
       const pos = map.project(location);
-      const markerHeight = map.getZoom() >= 14 ? 40 : 32; // 줌 레벨에 따른 마커 높이
       label.style.left = `${pos.x}px`;
-      label.style.top = `${pos.y + markerHeight + 4}px`; // 간격을 4px로 줄임
+      label.style.top = `${pos.y + 4}px`; // 마커 하단에서 4px 아래로
     }
 
     // 클러스터 생성 함수
@@ -666,6 +665,7 @@
 
             const marker = new mapboxgl.Marker({
               element: avatar,
+              anchor: 'bottom',
               clickTolerance: 0
             })
             .setLngLat(user.location);
