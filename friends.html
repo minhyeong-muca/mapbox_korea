@@ -7,14 +7,51 @@
     <style>
         body {
             margin: 0;
-            padding: 20px;
+            padding: 0;
             font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, system-ui, Roboto, sans-serif;
             background: #f5f5f5;
+        }
+
+        .nav-bar {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            background-color: rgba(0, 0, 0, 0.5);
+            backdrop-filter: blur(4px);
+            -webkit-backdrop-filter: blur(4px);
+            z-index: 1000;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 16px;
+        }
+
+        .nav-title {
+            color: white;
+            font-size: 24px;
+            font-weight: 600;
+        }
+
+        .back-button {
+            background: none;
+            border: none;
+            padding: 8px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-button svg {
+            width: 24px;
+            height: 24px;
         }
 
         .container {
             max-width: 960px;
             margin: 0 auto;
+            padding: 80px 16px 16px;
         }
 
         .friends-grid {
@@ -49,7 +86,7 @@
 
         .friend-info {
             flex: 1;
-            min-width: 0; /* 텍스트 오버플로우 처리를 위해 필요 */
+            min-width: 0;
         }
 
         .friend-name {
@@ -87,8 +124,22 @@
         }
 
         @media (max-width: 768px) {
+            .nav-bar {
+                padding: 12px;
+            }
+
+            .nav-title {
+                font-size: 20px;
+            }
+
+            .container {
+                padding: 72px 12px 12px;
+            }
+
             .friends-grid {
                 grid-template-columns: 1fr;
+                gap: 12px;
+                padding: 12px;
             }
 
             .friend-avatar {
@@ -99,6 +150,16 @@
     </style>
 </head>
 <body>
+    <div class="nav-bar">
+        <button class="back-button" onclick="history.back()">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M20 11H7.83L13.42 5.41L12 4L4 12L12 20L13.41 18.59L7.83 13H20V11Z" fill="white"/>
+            </svg>
+        </button>
+        <div class="nav-title">친구</div>
+        <div style="width: 40px;"></div><!-- 네비게이션 바 균형을 위한 더미 요소 -->
+    </div>
+
     <div class="container">
         <div class="friends-grid" id="friendsList"></div>
     </div>
