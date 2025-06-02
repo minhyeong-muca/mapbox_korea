@@ -471,7 +471,7 @@
     function updateLabelPosition(label, location) {
       const pos = map.project(location);
       label.style.left = `${pos.x}px`;
-      label.style.top = `${pos.y + 4}px`; // 마커 하단에서 4px 아래로
+      label.style.top = `${pos.y + 8}px`; // 마커 하단에서 8px 아래로
     }
 
     // 클러스터 생성 함수
@@ -652,7 +652,7 @@
             avatar.appendChild(img);
 
             const popup = new mapboxgl.Popup({
-              offset: [0, -20],
+              offset: [0, -8],
               closeButton: false,
               closeOnClick: false,
               anchor: 'bottom'
