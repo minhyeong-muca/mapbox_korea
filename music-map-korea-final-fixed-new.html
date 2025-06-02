@@ -360,6 +360,15 @@
       return 'mapbox://styles/minhyeongkim/cmb0bsdjd00mq01rf97v47t59';
     };
 
+    // 전역 변수 선언
+    let markerPopupPairs = [];
+    let markerLabelPairs = [];
+    let clusterMarkers = [];
+    let locationMarker = null;
+    let locationPopup = null;
+    let watchId = null;
+    let isClusterMode = false;
+
     // 지도 초기화
     const map = new mapboxgl.Map({
       container: 'map',
@@ -422,58 +431,6 @@
 
     // 클러스터 상태 관리
     let clusters = new Map();
-    let isClusterMode = false;
-    let clusterMarkers = [];
-
-    // 마커와 팝업을 함께 저장할 배열
-    const markerPopupPairs = [];
-    const markerLabelPairs = [];
-
-    // 현재 위치 추적 변수
-    let locationMarker = null;
-    let locationPopup = null;
-    let watchId = null;
-
-    // pitch 조정 함수
-    function updatePitch() {
-      const zoom = map.getZoom();
-      let targetPitch = 0;
-      
-      if (zoom >= 11) {
-        // 11-18 사이에서 0-60도로 선형 보간
-        const progress = Math.min((zoom - 11) / (18 - 11), 1);
-        targetPitch = Math.floor(progress * 60);
-      }
-
-      map.setPitch(targetPitch);
-    }
-
-    // 프라이버시 오버레이 업데이트
-    function updatePrivacyOverlay() {
-      const zoom = map.getZoom();
-      const overlay = document.getElementById('privacyOverlay');
-      
-      if (zoom >= 15.5) {
-        overlay.classList.add('active');
-      } else {
-        overlay.classList.remove('active');
-      }
-    }
-
-    // 줌 레벨 표시 업데이트
-    function updateZoomDisplay() {
-      const zoomDisplay = document.getElementById('zoomLevel');
-      const currentZoom = map.getZoom().toFixed(2);
-      zoomDisplay.textContent = `Zoom: ${currentZoom}`;
-    }
-
-    // 라벨 위치 업데이트 함수
-    function updateLabelPosition(label, location) {
-      const pos = map.project(location);
-      const markerHeight = map.getZoom() >= 14 ? 40 : 32;
-      label.style.left = `${pos.x}px`;
-      label.style.top = `${pos.y + (markerHeight/2) + 8}px`; // 마커 중앙에서 마커 반높이를 더하고 추가로 8px 아래로
-    }
 
     // 클러스터 생성 함수
     function createCluster(locations, zoom) {
@@ -540,20 +497,29 @@
       }).setLngLat(center);
     }
 
-    // 위치 정보 업데이트 함수
+    // 줌 레벨 표시 업데이트
+    function updateZoomDisplay() {
+      const zoomDisplay = document.getElementById('zoomLevel');
+      if (zoomDisplay) {
+        const currentZoom = map.getZoom().toFixed(2);
+        zoomDisplay.textContent = `Zoom: ${currentZoom}`;
+      }
+    }
+
+    // 위치 정보 업데이트
     async function updateLocationDisplay() {
       const center = map.getCenter();
       const locationDisplay = document.getElementById('locationDisplay');
+      if (!locationDisplay) return;
+      
       const currentZoom = map.getZoom();
       
       if (currentZoom < 5) {
         locationDisplay.style.display = 'none';
-        locationDisplay.style.marginBottom = '0';
         return;
       }
       
       try {
-        // types 파라미터 추가하여 더 자세한 주소 정보 요청
         const response = await fetch(`https://api.mapbox.com/geocoding/v5/mapbox.places/${center.lng},${center.lat}.json?access_token=${mapboxgl.accessToken}&language=ko&limit=1&types=place,district,locality,neighborhood`);
         const data = await response.json();
         
@@ -561,13 +527,11 @@
           const mainFeature = data.features[0];
           const context = mainFeature.context || [];
           
-          // 모든 컴포넌트 텍스트 추출
           const allTexts = [
             mainFeature.text,
             ...context.map(item => item.text)
           ];
 
-          // 주소 컴포넌트 매핑 수정
           const address = {
             country: context.find(item => item.id.startsWith('country'))?.text,
             region: allTexts.find(text => 
@@ -615,29 +579,73 @@
           if (finalAddress) {
             locationDisplay.textContent = finalAddress;
             locationDisplay.style.display = 'block';
-            locationDisplay.style.marginBottom = '4px';
           } else {
             locationDisplay.style.display = 'none';
-            locationDisplay.style.marginBottom = '0';
           }
         }
       } catch (error) {
         console.error('Error fetching location:', error);
         locationDisplay.style.display = 'none';
-        locationDisplay.style.marginBottom = '0';
       }
+    }
+
+    // 프라이버시 오버레이 업데이트
+    function updatePrivacyOverlay() {
+      const zoom = map.getZoom();
+      const overlay = document.getElementById('privacyOverlay');
+      
+      if (zoom >= 15.5) {
+        overlay.classList.add('active');
+      } else {
+        overlay.classList.remove('active');
+      }
+    }
+
+    // pitch 조정 함수
+    function updatePitch() {
+      const zoom = map.getZoom();
+      let targetPitch = 0;
+      
+      if (zoom >= 11) {
+        // 11-18 사이에서 0-60도로 선형 보간
+        const progress = Math.min((zoom - 11) / (18 - 11), 1);
+        targetPitch = Math.floor(progress * 60);
+      }
+
+      map.setPitch(targetPitch);
+    }
+
+    // 라벨 위치 업데이트 함수
+    function updateLabelPosition(label, location) {
+      const pos = map.project(location);
+      const markerHeight = map.getZoom() >= 14 ? 40 : 32;
+      label.style.left = `${pos.x}px`;
+      label.style.top = `${pos.y + (markerHeight/2) + 8}px`; // 마커 중앙에서 마커 반높이를 더하고 추가로 8px 아래로
     }
 
     // 지도 로드 완료 시 실행
     map.on('load', () => {
       console.log('Map loaded');
+      
+      // 초기 상태 설정
+      updateZoomDisplay();
+      updateLocationDisplay();
+      updatePrivacyOverlay();
+      updatePitch();
+
       // 데이터 로딩
       fetch('users_updated_with_scattered.json')
         .then(res => res.json())
         .then(users => {
           console.log('Users data loaded:', users);
           
-          // 마커와 팝업을 함께 저장할 배열 초기화
+          // 기존 마커 제거
+          markerPopupPairs.forEach(({ marker, label }) => {
+            marker.remove();
+            if (label) label.remove();
+          });
+          
+          // 배열 초기화
           markerPopupPairs = [];
           markerLabelPairs = [];
 
