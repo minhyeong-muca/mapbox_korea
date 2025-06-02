@@ -66,7 +66,9 @@
             border-radius: 16px;
             padding: 16px;
             display: flex;
-            gap: 16px;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05);
         }
 
@@ -85,14 +87,14 @@
         }
 
         .friend-info {
-            flex: 1;
-            min-width: 0;
+            width: 100%;
+            text-align: center;
         }
 
         .friend-name {
             font-size: 16px;
             font-weight: 600;
-            margin-bottom: 4px;
+            margin-bottom: 8px;
         }
 
         .friend-song {
@@ -143,23 +145,26 @@
             }
 
             .friend-avatar {
-                width: 60px;
-                height: 60px;
-            }
-
-            .friend-info {
-                min-width: 0;
+                width: 64px;
+                height: 64px;
             }
 
             .friend-name {
                 font-size: 14px;
+                margin-bottom: 6px;
             }
 
             .friend-song {
                 font-size: 12px;
+                margin-bottom: 3px;
             }
 
             .friend-artist {
+                font-size: 11px;
+                margin-bottom: 6px;
+            }
+
+            .friend-intimacy {
                 font-size: 11px;
             }
         }
