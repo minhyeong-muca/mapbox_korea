@@ -365,7 +365,7 @@
       container: 'map',
       style: getStyleUrl(),
       center: [127.0276, 37.4979],
-      zoom: 0,
+      zoom: 10,
       maxZoom: 20,
       minZoom: 0,
       pitch: 0,
@@ -634,6 +634,7 @@
       fetch('users_updated_with_scattered.json')
         .then(res => res.json())
         .then(users => {
+          // 친구가 아닌 사용자의 마커는 더 작고 투명하게 표시
           users.forEach(user => {
             const avatar = document.createElement('div');
             avatar.style.width = '50px';
@@ -643,6 +644,13 @@
             avatar.style.boxShadow = '0 0 6px rgba(0,0,0,0.3)';
             avatar.style.cursor = 'pointer';
             avatar.style.display = 'none';
+            
+            // 친구가 아닌 경우 마커 스타일 조정
+            if (!user.isFriend) {
+              avatar.style.opacity = '0.6';
+              avatar.style.width = '40px';
+              avatar.style.height = '40px';
+            }
 
             const img = document.createElement('img');
             img.src = `images/${user.characterImg}`;
@@ -661,6 +669,7 @@
               <div class="popup-content">
                 <div class="song-info">${user.title}</div>
                 <div class="artist">${user.artist}</div>
+                ${user.isFriend ? `<div style="font-size: 11px; color: #3B82F6; margin-top: 2px;">친밀도 ${user.intimacy}%</div>` : ''}
               </div>
             `);
 
@@ -692,7 +701,9 @@
               label,
               avatar,
               img,
-              location: user.location
+              location: user.location,
+              isFriend: user.isFriend,
+              intimacy: user.intimacy
             });
 
             markerLabelPairs.push({
@@ -708,7 +719,7 @@
               // 다른 모든 팝업과 라벨 숨기기
               markerPopupPairs.forEach(pair => {
                 pair.popup.remove();
-                if (map.getZoom() < 13) {
+                if (map.getZoom() < 15.5) {
                   pair.label.style.display = 'none';
                 }
               });
@@ -720,7 +731,7 @@
                 popup.addTo(map);
               }
               
-              if (map.getZoom() >= 13) {
+              if (map.getZoom() >= 15.5) {
                 label.style.display = 'block';
                 updateLabelPosition(label, user.location);
               }
@@ -729,10 +740,9 @@
             // 마커 크기에 따른 팝업 위치 조정
             function updatePopupOffset() {
               const markerHeight = map.getZoom() >= 14 ? 40 : 32;
-              popup.options.offset[1] = -(markerHeight/2) - 8; // 마커 중앙에서 마커 반높이를 빼고 추가로 8px 위로
+              popup.options.offset[1] = -(markerHeight/2) - 8;
             }
 
-            // 줌 변경 시 팝업 위치 업데이트
             map.on('zoom', updatePopupOffset);
 
             marker.setPopup(popup);
@@ -755,14 +765,14 @@
 
             if (zoom >= 13) {
               requestAnimationFrame(() => {
-                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
+                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location, isFriend }) => {
                   // 마커 크기 설정
                   if (zoom >= 13 && zoom < 14) {
-                    avatar.style.width = '32px';
-                    avatar.style.height = '32px';
+                    avatar.style.width = isFriend ? '32px' : '24px';
+                    avatar.style.height = isFriend ? '32px' : '24px';
                   } else {
-                    avatar.style.width = '40px';
-                    avatar.style.height = '40px';
+                    avatar.style.width = isFriend ? '40px' : '32px';
+                    avatar.style.height = isFriend ? '40px' : '32px';
                   }
 
                   // 화면 영역 체크
