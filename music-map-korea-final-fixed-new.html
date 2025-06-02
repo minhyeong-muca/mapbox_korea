@@ -728,7 +728,7 @@
             // 마커 크기에 따른 팝업 위치 조정
             function updatePopupOffset() {
               const markerHeight = map.getZoom() >= 14 ? 40 : 32;
-              popup.options.offset[1] = markerHeight/2 + 8; // 마커 중앙에서 위로 (마커 반높이 + 8px)
+              popup.options.offset[1] = -(markerHeight/2) - 8; // 마커 중앙에서 마커 반높이를 빼고 추가로 8px 위로
             }
 
             // 줌 변경 시 팝업 위치 업데이트
