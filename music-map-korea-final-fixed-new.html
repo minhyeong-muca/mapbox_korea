@@ -372,55 +372,52 @@
       antialias: true,
       fadeDuration: 0,
       dragRotate: false,
-      touchZoomRotate: {
-        around: 'center',
-        pinchZoom: true
-      },
       touchPitch: false,
       doubleClickZoom: false
     });
 
-    // 모바일 터치 동작 최적화
-    const nav = new mapboxgl.NavigationControl({
-      showCompass: false,
-      visualizePitch: false
-    });
-    map.addControl(nav, 'top-right');
+    // 터치 줌 동작 최적화
+    let startDistance = 0;
+    let startZoom = 0;
+    let isZooming = false;
 
-    // 터치 이벤트 핸들링 개선
-    let initialZoom = null;
-    let zoomTimeout = null;
-
-    map.on('touchstart', 'map', (e) => {
-      if (e.points.length === 2) {
-        initialZoom = map.getZoom();
-      }
-    });
-
-    map.on('touchmove', 'map', (e) => {
-      if (e.points.length === 2) {
-        clearTimeout(zoomTimeout);
-        
-        const point1 = e.points[0];
-        const point2 = e.points[1];
-        const distance = Math.sqrt(
-          Math.pow(point2.x - point1.x, 2) + 
-          Math.pow(point2.y - point1.y, 2)
+    map.getCanvas().addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        isZooming = true;
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        startDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
         );
-        
-        const zoomDelta = distance * 0.005;
-        const currentZoom = map.getZoom();
-        const newZoom = Math.min(Math.max(currentZoom + zoomDelta, map.getMinZoom()), map.getMaxZoom());
-        
-        map.easeTo({
-          zoom: newZoom,
-          duration: 0
-        });
+        startZoom = map.getZoom();
+        e.preventDefault();
       }
+    }, { passive: false });
+
+    map.getCanvas().addEventListener('touchmove', (e) => {
+      if (isZooming && e.touches.length === 2) {
+        const touch1 = e.touches[0];
+        const touch2 = e.touches[1];
+        const currentDistance = Math.hypot(
+          touch2.clientX - touch1.clientX,
+          touch2.clientY - touch1.clientY
+        );
+
+        const zoomDiff = Math.log2(currentDistance / startDistance);
+        const newZoom = startZoom + (zoomDiff * 1.5);
+        
+        map.setZoom(Math.min(Math.max(newZoom, map.getMinZoom()), map.getMaxZoom()));
+        e.preventDefault();
+      }
+    }, { passive: false });
+
+    map.getCanvas().addEventListener('touchend', () => {
+      isZooming = false;
     });
 
-    map.on('touchend', 'map', () => {
-      initialZoom = null;
+    map.getCanvas().addEventListener('touchcancel', () => {
+      isZooming = false;
     });
 
     // 클러스터 상태 관리
