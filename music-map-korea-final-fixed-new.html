@@ -652,10 +652,10 @@
             avatar.appendChild(img);
 
             const popup = new mapboxgl.Popup({
-              offset: [0, -8],
+              offset: [0, 8],
               closeButton: false,
               closeOnClick: false,
-              anchor: 'bottom'
+              anchor: 'top'
             }).setHTML(`
               <div class="popup-content">
                 <div class="song-info">${user.title}</div>
