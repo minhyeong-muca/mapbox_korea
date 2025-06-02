@@ -470,9 +470,9 @@
     // 라벨 위치 업데이트 함수
     function updateLabelPosition(label, location) {
       const pos = map.project(location);
-      const markerHeight = 40; // 마커의 높이
+      const markerHeight = map.getZoom() >= 14 ? 40 : 32; // 줌 레벨에 따른 마커 높이
       label.style.left = `${pos.x}px`;
-      label.style.top = `${pos.y + markerHeight + 8}px`; // 마커 아래에 위치
+      label.style.top = `${pos.y + markerHeight + 4}px`; // 간격을 4px로 줄임
     }
 
     // 클러스터 생성 함수
@@ -741,8 +741,47 @@
               label.style.display = 'none';
             });
 
-            if (zoom < 13) {
-              // 클러스터 표시
+            // 성능 최적화를 위한 디바운스
+            if (zoom >= 13) {
+              requestAnimationFrame(() => {
+                markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
+                  // 마커 크기 설정
+                  if (zoom >= 13 && zoom < 14) {
+                    avatar.style.width = '32px';
+                    avatar.style.height = '32px';
+                  } else {
+                    avatar.style.width = '40px';
+                    avatar.style.height = '40px';
+                  }
+
+                  // 화면 영역 체크
+                  const pos = map.project(location);
+                  const canvas = map.getCanvas();
+                  const buffer = 100; // 화면 밖 버퍼 영역
+
+                  if (pos.x >= -buffer && pos.x <= canvas.width + buffer &&
+                      pos.y >= -buffer && pos.y <= canvas.height + buffer) {
+                    // 마커 표시
+                    avatar.style.display = 'block';
+                    marker.addTo(map);
+
+                    // 라벨 표시 (줌 13 이상)
+                    if (zoom >= 13) {
+                      label.style.display = 'block';
+                      updateLabelPosition(label, location);
+                    }
+
+                    // 팝업 표시 (줌 14 이상)
+                    if (zoom >= 14) {
+                      popup.remove();
+                      marker.setPopup(popup);
+                      popup.addTo(map);
+                    }
+                  }
+                });
+              });
+            } else {
+              // 클러스터 표시 (줌 13 미만)
               const locations = markerPopupPairs.map(({ location }) => ({
                 lat: location[1],
                 lng: location[0]
@@ -753,34 +792,6 @@
                 const clusterMarker = createClusterMarker(data.center, data.count);
                 clusterMarker.addTo(map);
                 clusterMarkers.push(clusterMarker);
-              });
-            } else {
-              markerPopupPairs.forEach(({ marker, popup, label, avatar, img, location }) => {
-                // 마커 크기 설정
-                if (zoom >= 13 && zoom < 14) {
-                  avatar.style.width = '32px';
-                  avatar.style.height = '32px';
-                } else {
-                  avatar.style.width = '40px';
-                  avatar.style.height = '40px';
-                }
-
-                // 마커 표시
-                avatar.style.display = 'block';
-                marker.addTo(map);
-
-                // 라벨 표시 (줌 13 이상)
-                if (zoom >= 13) {
-                  label.style.display = 'block';
-                  updateLabelPosition(label, location);
-                }
-
-                // 팝업 표시 (줌 14 이상)
-                if (zoom >= 14) {
-                  popup.remove();
-                  marker.setPopup(popup);
-                  popup.addTo(map);
-                }
               });
             }
 
