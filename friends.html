@@ -137,7 +137,7 @@
             }
 
             .friends-grid {
-                grid-template-columns: 1fr;
+                grid-template-columns: repeat(2, 1fr);
                 gap: 12px;
                 padding: 12px;
             }
@@ -145,6 +145,22 @@
             .friend-avatar {
                 width: 60px;
                 height: 60px;
+            }
+
+            .friend-info {
+                min-width: 0;
+            }
+
+            .friend-name {
+                font-size: 14px;
+            }
+
+            .friend-song {
+                font-size: 12px;
+            }
+
+            .friend-artist {
+                font-size: 11px;
             }
         }
     </style>
